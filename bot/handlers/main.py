@@ -43,8 +43,8 @@ async def reply(message: Message) -> None:
 @router.message(F)
 async def echo(message: Message, bot: Bot) -> None:
     try:
-        if not message or message.text.startswith("/"):
-            return
+        # if not message or message.text.startswith("/"): -> Неправильное ипользование тиньковоф!
+        #     return
 
         admin_id: Optional[int] = os.getenv('ADMINS_ID')
         if not admin_id:
@@ -56,7 +56,12 @@ async def echo(message: Message, bot: Bot) -> None:
             return
 
         user_identifier = f"@{message.from_user.username}" if message.from_user.username else f"ID: {message.from_user.id}"
-        base_text = f"Новое сообщение от {user_identifier}! 👇"
+        if message.text:
+            base_text = f"Новое сообщение от {user_identifier}! 👇\n\n{message.text}"
+        elif message.caption:
+            base_text = f"Новое сообщение от {user_identifier}! 👇\n\n{message.caption}"
+        else:
+            base_text = f"Новое сообщение от {user_identifier}! 👇"
         reply_instruction = f"Чтобы ответить напишите: <code>/reply {message.from_user.id} текст</code>"
 
         await message.reply("Сообщение успешно отправлено!")
@@ -66,7 +71,7 @@ async def echo(message: Message, bot: Bot) -> None:
             await bot.send_message(chat_id=admin_id, text=reply_instruction, parse_mode='html')
 
         content_dispatcher = {
-            'text': lambda: send_to_admin('message', text=base_text + '\n\n' + message.text, parse_mode='html'),
+            'text': lambda: send_to_admin('message', text=base_text, parse_mode='html'),
             'photo': lambda: send_to_admin('photo', photo=message.photo[-1].file_id, caption=base_text, parse_mode='html'),
             'document': lambda: send_to_admin('document', document=message.document.file_id, caption=base_text, parse_mode='html'),
             'video': lambda: send_to_admin('video', video=message.video.file_id, caption=base_text, parse_mode='html'),
